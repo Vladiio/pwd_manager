@@ -29,13 +29,14 @@ class Entry:
         pwd = password.encode('utf-8')
         return Fernet(self.__key).encrypt(pwd)
 
-    def show_password(self):
+    @property
+    def password(self):
         pwd = Fernet(self.__key).decrypt(self.__password)
-        print(pwd.decode('utf-8'))
+        return pwd.decode('utf-8')
 
-    def set_password(self, new_pwd):
+    @password.setter
+    def password(self, new_pwd):
         self.__password = self.__encrypt_pwd(new_pwd)
-        print('Password is changed')
 
 
 class Keyring:
@@ -45,7 +46,7 @@ class Keyring:
         self.entries = self.load()
 
     def add_entry(self, label, password):
-        if not label in self.entries:
+        if label not in self.entries:
             self.entries[label] = Entry(
                 label, password)
             self.is_changed = True
@@ -58,7 +59,7 @@ class Keyring:
         except KeyError:
             raise EntryDoesNotExist(label)
         else:
-            entry.set_password(new_pwd)
+            entry.password = new_pwd
             self.is_changed = True
 
     def remove_entry(self, label):
@@ -70,7 +71,7 @@ class Keyring:
 
     def show_password(self, label):
         if label in self.entries:
-            self.entries[label].show_password()
+            print(self.entries[label].password)
         else:
             raise EntryDoesNotExist(label)
 
@@ -82,7 +83,7 @@ class Keyring:
         try:
             with open(self.filename, 'rb') as f:
                 return pickle.load(f)
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             return {}
 
     def save(self):
